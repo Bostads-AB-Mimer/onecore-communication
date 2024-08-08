@@ -1,5 +1,5 @@
 import KoaRouter from '@koa/router'
-import { SystemHealth, SystemStatus } from 'onecore-types'
+import { SystemHealth } from 'onecore-types'
 import config from '../../common/config'
 import { healthCheck as infobipHealthCheck } from '../infobip-service/adapters/infobip-adapter'
 
@@ -8,7 +8,7 @@ const healthChecks: Map<string, SystemHealth> = new Map()
 const probe = async (
   systemName: string,
   minimumMinutesBetweenRequests: number,
-  checkFunction: Function,
+  checkFunction: () => any,
   activeMessage?: string
 ): Promise<SystemHealth> => {
   let currentHealth = healthChecks.get(systemName)

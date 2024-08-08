@@ -2,7 +2,6 @@ import { Infobip, AuthType } from '@infobip-api/sdk'
 import config from '../../../common/config'
 import { Email, ParkingSpaceOfferEmail } from 'onecore-types'
 import { logger } from 'onecore-utilities'
-import { ResponseError } from '@sendgrid/mail'
 
 const infobip = new Infobip({
   baseUrl: config.infobip.baseUrl,
