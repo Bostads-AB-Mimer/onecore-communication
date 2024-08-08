@@ -21,7 +21,6 @@ const probe = async (
   ) {
     try {
       const result = await checkFunction()
-      console.log('result', result)
       if (result) {
         currentHealth = {
           status: result.status,
