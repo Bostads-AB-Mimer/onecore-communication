@@ -1,6 +1,6 @@
 import { Infobip, AuthType } from '@infobip-api/sdk'
 import config from '../../../common/config'
-import { Email, ParkingSpaceOfferEmail } from 'onecore-types'
+import { Email, ParkingSpaceOfferEmail, ParkingSpaceNotificationEmail } from 'onecore-types'
 import { logger } from 'onecore-utilities'
 
 const infobip = new Infobip({
@@ -11,6 +11,7 @@ const infobip = new Infobip({
 
 const NewParkingSpaceOfferTemplateId = 200000000092027
 const ExistingParkingSpaceOfferTemplateId = 200000000094058
+const ParkingSpaceAssignedToOtherTemplateId = 200000000092051 
 
 export const sendEmail = async (message: Email) => {
   logger.info({ to: message.to, subject: message.subject }, 'Sending email')
@@ -63,9 +64,9 @@ export const sendParkingSpaceOffer = async (email: ParkingSpaceOfferEmail) => {
       text: email.text, // Should be overriden by template, but can be used as fallback
     })
     if (response.status === 200) {
-      return response.data
-    } else {
-      throw new Error(response.body)
+      return response.data;
+    } else {  
+      throw new Error(response.body);
     }
   } catch (error) {
     console.error(error)
