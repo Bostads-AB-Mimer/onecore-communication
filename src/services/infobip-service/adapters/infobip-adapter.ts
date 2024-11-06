@@ -1,6 +1,12 @@
 import { Infobip, AuthType } from '@infobip-api/sdk'
 import config from '../../../common/config'
-import { Email, ParkingSpaceOfferEmail, ParkingSpaceNotificationEmail, ParkingSpaceOfferSms } from 'onecore-types'
+import {
+  Email,
+  ParkingSpaceOfferEmail,
+  ParkingSpaceNotificationEmail,
+  ParkingSpaceOfferSms,
+  TicketMessageSms,
+} from 'onecore-types'
 import { logger } from 'onecore-utilities'
 
 const infobip = new Infobip({
@@ -137,6 +143,29 @@ export const sendParkingSpaceAssignedToOther = async (emails: ParkingSpaceNotifi
     }
   } catch (error) {
     logger.error(error)
+    throw error
+  }
+}
+
+export const sendTicketSms = async (sms: TicketMessageSms) => {
+  try {
+    const response = await infobip.channels.sms.send({
+      messages: [
+        {
+          destinations: [{ to: sms.phoneNumber }],
+          from: 'Mimer AB',
+          text: sms.message,
+        },
+      ],
+    })
+
+    if (response.status === 200) {
+      return response.data
+    } else {
+      throw new Error(response.body)
+    }
+  } catch (error) {
+    logger.error('Error sending SMS:', error)
     throw error
   }
 }
