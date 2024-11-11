@@ -81,6 +81,8 @@ export const routes = (router: KoaRouter) => {
   })
 
   router.post('(.*)/sendSms', async (ctx) => {
+    const metadata = generateRouteMetadata(ctx)
+
     try {
       const sms = ctx.request.body
       if (!isValidParkingSpaceOfferSms(sms)) {
@@ -97,18 +99,20 @@ export const routes = (router: KoaRouter) => {
 
       const result = await sendParkingSpaceOfferSms({ ...sms, phoneNumber })
       ctx.status = 200
-      ctx.body = result
+      ctx.body = { content: result, ...metadata }
     } catch (error: any) {
       ctx.status = 500
       ctx.body = {
         message: error.message,
+        ...metadata,
       }
     }
   })
 
   router.post('(.*)/sendTicketSms', async (ctx) => {
+    const metadata = generateRouteMetadata(ctx)
+
     try {
-      const metadata = generateRouteMetadata(ctx)
       const sms = ctx.request.body
       if (!isValidTicketMessageSms(sms)) {
         ctx.status = 400
@@ -132,11 +136,12 @@ export const routes = (router: KoaRouter) => {
 
       const result = await sendTicketSms({ message: sms.message, phoneNumber })
       ctx.status = 200
-      ctx.body = result
+      ctx.body = { content: result, ...metadata }
     } catch (error: any) {
       ctx.status = 500
       ctx.body = {
         message: error.message,
+        ...metadata,
       }
     }
   })
