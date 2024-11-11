@@ -153,7 +153,7 @@ export const sendTicketSms = async (sms: TicketMessageSms) => {
       messages: [
         {
           destinations: [{ to: sms.phoneNumber }],
-          from: 'Mimer AB',
+          from: 'Mimer',
           text: sms.message,
         },
       ],
