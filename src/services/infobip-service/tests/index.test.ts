@@ -77,6 +77,18 @@ describe('/sendTicketSms', () => {
     expect(res.status).toBe(400)
     expect(sendTicketSmsSpy).not.toHaveBeenCalled()
   })
+
+  it('should return 400 if phone number is not a mobile number', async () => {
+    sendTicketSmsSpy.mockResolvedValue({})
+
+    const res = await request(app.callback()).post('/sendTicketSms').send({
+      phoneNumber: '016114164',
+      message: 'hello',
+    })
+
+    expect(res.status).toBe(400)
+    expect(sendTicketSmsSpy).not.toHaveBeenCalled()
+  })
 })
 
 describe('isMessageEmail', () => {
