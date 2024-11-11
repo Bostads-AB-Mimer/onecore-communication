@@ -120,7 +120,7 @@ export const routes = (router: KoaRouter) => {
       }
 
       let phoneNumber = sms.phoneNumber
-      if (!phoneValidator(phoneNumber)) {
+      if (!phoneValidator(phoneNumber, { onlyMobile: true })) {
         ctx.status = 400
         ctx.body = {
           reason: 'Invalid phone number',
