@@ -5,6 +5,7 @@ import {
   ParkingSpaceOfferEmail,
   ParkingSpaceNotificationEmail,
   ParkingSpaceOfferSms,
+  WorkOrderEmail,
   WorkOrderSms,
 } from 'onecore-types'
 import { logger } from 'onecore-utilities'
@@ -152,7 +153,7 @@ export const sendParkingSpaceAssignedToOther = async (
   }
 }
 
-export const sendWorkOrderEmail = async (email: Email) => {
+export const sendWorkOrderEmail = async (email: WorkOrderEmail) => {
   logger.info('Sending work order email', config.infobip.baseUrl)
   try {
     const toField = JSON.stringify({
@@ -161,13 +162,16 @@ export const sendWorkOrderEmail = async (email: Email) => {
         message: email.text,
       },
     })
-    const response = await infobip.channels.email.send({
+    const emailPayload: any = {
       from: 'Bostads Mimer AB <noreply@mimer.nu>',
       to: toField,
-      templateId: WorkOrderEmailTemplateId,
       subject: email.subject,
       text: email.text,
-    })
+      ...(email.useTemplate && { templateId: WorkOrderEmailTemplateId }),
+    }
+
+    const response = await infobip.channels.email.send(emailPayload)
+
     if (response.status === 200) {
       return response.data
     } else {
@@ -180,11 +184,10 @@ export const sendWorkOrderEmail = async (email: Email) => {
 }
 
 export const sendWorkOrderSms = async (sms: WorkOrderSms) => {
-  const message = he.decode(
-    striptags(sms.message.replace(/<br\s*\/?>/gi, '\n'))
-  )
+  let message = he.decode(striptags(sms.message.replace(/<br\s*\/?>/gi, '\n')))
   const noreply =
     'Detta sms går ej att svara på. Det går bra att återkoppla i ärendet på "Mina sidor".'
+  message = sms.useTemplate ? `${message}\n\n${noreply}` : `${message}`
 
   try {
     const response = await infobip.channels.sms.send({
@@ -192,7 +195,7 @@ export const sendWorkOrderSms = async (sms: WorkOrderSms) => {
         {
           destinations: [{ to: sms.phoneNumber }],
           from: 'Mimer',
-          text: `${message}\n\n${noreply}`,
+          text: message,
         },
       ],
     })
