@@ -23,6 +23,7 @@ const NewParkingSpaceOfferSmsTemplateId = 200000000094113
 const ReplaceParkingSpaceOfferTemplateId = 200000000094058
 const ParkingSpaceAssignedToOtherTemplateId = 200000000092051
 const WorkOrderEmailTemplateId = 200000000146435
+const WorkOrderExternalContractorEmailTemplateId = 200000000173744
 
 export const sendEmail = async (message: Email) => {
   logger.info({ to: message.to, subject: message.subject }, 'Sending email')
@@ -160,6 +161,7 @@ export const sendWorkOrderEmail = async (email: WorkOrderEmail) => {
       to: email.to,
       placeholders: {
         message: email.text,
+        externalContractor: email.externalContractorName,
       },
     })
     const emailPayload: any = {
@@ -167,7 +169,9 @@ export const sendWorkOrderEmail = async (email: WorkOrderEmail) => {
       to: toField,
       subject: email.subject,
       text: email.text,
-      ...(email.useTemplate && { templateId: WorkOrderEmailTemplateId }),
+      templateId: email.externalContractorName
+        ? WorkOrderExternalContractorEmailTemplateId
+        : WorkOrderEmailTemplateId,
     }
 
     const response = await infobip.channels.email.send(emailPayload)
@@ -184,10 +188,11 @@ export const sendWorkOrderEmail = async (email: WorkOrderEmail) => {
 }
 
 export const sendWorkOrderSms = async (sms: WorkOrderSms) => {
-  let message = he.decode(striptags(sms.message.replace(/<br\s*\/?>/gi, '\n')))
-  const noreply =
-    'Detta sms går ej att svara på. Det går bra att återkoppla i ärendet på "Mina sidor".'
-  message = sms.useTemplate ? `${message}\n\n${noreply}` : `${message}`
+  logger.info('Sending work order sms', config.infobip.baseUrl)
+  const message = he.decode(striptags(sms.text.replace(/<br\s*\/?>/gi, '\n')))
+  const noreply = sms.externalContractorName
+    ? `Hälsningar, ${sms.externalContractorName} i uppdrag från Mimer`
+    : 'Detta sms går ej att svara på. Det går bra att återkoppla i ärendet på "Mina sidor".'
 
   try {
     const response = await infobip.channels.sms.send({
@@ -195,7 +200,7 @@ export const sendWorkOrderSms = async (sms: WorkOrderSms) => {
         {
           destinations: [{ to: sms.phoneNumber }],
           from: 'Mimer',
-          text: message,
+          text: `${message}\n\n${noreply}`,
         },
       ],
     })

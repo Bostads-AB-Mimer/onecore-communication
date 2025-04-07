@@ -137,9 +137,9 @@ export const routes = (router: KoaRouter) => {
       phoneNumber = '46' + normalize(phoneNumber).slice(1)
 
       const result = await sendWorkOrderSms({
-        message: sms.message,
+        text: sms.text,
         phoneNumber,
-        useTemplate: sms.useTemplate,
+        externalContractorName: sms.externalContractorName,
       })
       ctx.status = 200
       ctx.body = { content: result, ...metadata }
@@ -155,9 +155,8 @@ export const routes = (router: KoaRouter) => {
   router.post('(.*)/sendWorkOrderEmail', async (ctx) => {
     const metadata = generateRouteMetadata(ctx)
     const emailData = ctx.request.body as WorkOrderEmail
-    const { useTemplate, ...email } = emailData
 
-    if (!isMessageEmail(email)) {
+    if (!isMessageEmail(emailData)) {
       ctx.status = 400
       ctx.body = { reason: 'Message is not an email object', ...metadata }
       return
@@ -231,7 +230,8 @@ export const isValidWorkOrderSms = (sms: any): sms is WorkOrderSms => {
     typeof sms === 'object' &&
     sms !== null &&
     typeof sms.phoneNumber === 'string' &&
-    typeof sms.message === 'string' &&
-    typeof sms.useTemplate === 'boolean'
+    typeof sms.text === 'string' &&
+    (typeof sms.externalContractorName === 'string' ||
+      typeof sms.externalContractorName === 'undefined')
   )
 }
