@@ -11,6 +11,7 @@ import {
 import { logger } from 'onecore-utilities'
 import striptags from 'striptags'
 import he from 'he'
+import axios from 'axios'
 
 const infobip = new Infobip({
   baseUrl: config.infobip.baseUrl,
@@ -224,4 +225,67 @@ export const healthCheck = async () => {
     (response as Error).message != 'email.from is required.'
   )
     throw new Error((response as Error).message)
+}
+
+
+// Local type declaration of flowparticipant (move to onecore-types?)
+export interface FlowParticipant {
+  identifyBy: {
+    identifier: string;
+    type: string; // e.g., "PHONE", "EMAIL"
+  };
+  person: {
+    firstName: string;
+    lastName: string;
+    customAttributes?: Record<string, string>;
+    contactInformation?: {
+      phone?: {
+        number: string;
+      }[];
+      email?: {
+        address: string;
+      }[];
+    };
+  };
+}
+
+export interface AddToFlowRequest {
+  flowId: string;
+  participants: FlowParticipant[];
+}
+
+// Adapter function to add user to flow, using axios instead of infobips SDK (not availble for flows)
+
+export const addUserToFlow = async (request: AddToFlowRequest) => {
+  logger.info('Adding user to flow', config.infobip.baseUrl);
+  try {
+    const url = `${config.infobip.baseUrl}/moments/1/flows/${request.flowId}/participants`;
+    
+    const response = await axios.post(url, 
+      { participants: request.participants },
+      {
+        headers: {
+          'Authorization': `App ${config.infobip.apiKey}`,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+    
+    if (response.status === 200 || response.status === 201) {
+      
+      const message = `Request processed successfully. Participant(s) were submitted to flow ${request.flowId}. Note that Infobip may filter out participants who are already in the flow based on flow settings.`;
+      logger.info(`Successfully added user to flow - ${message}`);     
+      const enhancedData = {
+        ...response.data,
+        message: message
+      };
+      
+      return { data: enhancedData };
+    } else {
+      throw new Error(JSON.stringify(response.data));
+    }
+  } catch (error) {
+    logger.error('Error when adding user to flow infobip:', error);
+    throw error;
+  }
 }
