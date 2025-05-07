@@ -8,6 +8,9 @@ import {
   sendParkingSpaceOfferSms,
   sendWorkOrderSms,
   sendWorkOrderEmail,
+  addUserToFlow, 
+  AddToFlowRequest,
+   FlowParticipant
 } from './adapters/infobip-adapter'
 import {
   Email,
@@ -18,6 +21,7 @@ import {
   WorkOrderEmail,
 } from 'onecore-types'
 import { generateRouteMetadata, logger } from 'onecore-utilities'
+
 
 export const routes = (router: KoaRouter) => {
   router.post('(.*)/sendMessage', async (ctx) => {
@@ -174,6 +178,29 @@ export const routes = (router: KoaRouter) => {
       }
     }
   })
+  router.post('(.*)/addUserToFlow', async (ctx) => {
+    const metadata = generateRouteMetadata(ctx);
+    const request = ctx.request.body;
+    
+    if (!isValidAddToFlowRequest(request)) {
+      ctx.status = 400;
+      ctx.body = { reason: 'Invalid request format', ...metadata };
+      return;
+    }
+    
+    try {
+      const result = await addUserToFlow(request);
+      ctx.status = 200;
+      ctx.body = { content: result.data, ...metadata };
+    } catch (error: any) {
+      ctx.status = 500;
+      ctx.body = {
+        error: error.message,
+        ...metadata,
+      };
+    }
+  });
+
 }
 
 export const isParkingSpaceOfferEmail = (
@@ -235,3 +262,30 @@ export const isValidWorkOrderSms = (sms: any): sms is WorkOrderSms => {
       typeof sms.externalContractorName === 'undefined')
   )
 }
+
+//For flows infobip
+
+export const isValidAddToFlowRequest = (request: any): request is AddToFlowRequest => {
+  return (
+    typeof request === 'object' &&
+    request !== null &&
+    typeof request.flowId === 'string' &&
+    request.flowId.length > 0 &&
+    Array.isArray(request.participants) &&
+    request.participants.length > 0 &&
+    request.participants.every((participant: any) => 
+      typeof participant === 'object' &&
+      participant !== null &&
+      typeof participant.identifyBy === 'object' &&
+      participant.identifyBy !== null &&
+      typeof participant.identifyBy.identifier === 'string' &&
+      typeof participant.identifyBy.type === 'string' &&
+      typeof participant.person === 'object' &&
+      participant.person !== null &&
+      typeof participant.person.firstName === 'string' &&
+      typeof participant.person.lastName === 'string'
+    )
+  );
+}
+
+
